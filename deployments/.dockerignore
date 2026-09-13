@@ -1,0 +1,9 @@
+.git
+.env
+.gitignore
+.vscode
+.idea
+bin
+tmp
+coverage.out
+**/*_test.go
