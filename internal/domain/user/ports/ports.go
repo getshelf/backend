@@ -9,13 +9,11 @@ import (
 )
 
 type UniquenessChecker interface {
-	IsUsernameTaken(context.Context, values.Username) (bool, error)
 	IsEmailTaken(context.Context, values.Email) (bool, error)
 }
 
 type User interface {
 	ID() values.UserID
-	Username() values.Username
 	Email() values.Email
 	PasswordHash() values.PasswordHash
 	CreatedAt() time.Time
@@ -27,7 +25,6 @@ type UserRepository interface {
 
 type AuthUser struct {
 	ID           values.UserID
-	Username     values.Username
 	Email        values.Email
 	PasswordHash values.PasswordHash
 	CreatedAt    time.Time
@@ -36,7 +33,7 @@ type AuthUser struct {
 type AuthRepository interface {
 	FindByLogin(context.Context, string) (AuthUser, error)
 	FindByID(context.Context, values.UserID) (AuthUser, error)
-	UpdateProfile(context.Context, values.UserID, values.Username, values.Email) error
+	UpdateProfile(context.Context, values.UserID, values.Email) error
 }
 
 type PasswordHasher interface {

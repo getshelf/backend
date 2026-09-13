@@ -58,18 +58,15 @@ func TestRegisterHTTP(t *testing.T) {
 	handler := routers.NewRouter(routers.NewRegisterHandler(applicationService), routers.NewAuthHandler(applicationUser.AuthService{}), func(next http.Handler) http.Handler { return next })
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT EXISTS (SELECT 1 FROM users WHERE username = $1)`)).
-		WithArgs("john_doe").
-		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT EXISTS (SELECT 1 FROM users WHERE email = $1)`)).
 		WithArgs("john@example.com").
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
-	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO users (id, username, email, password_hash, created_at) VALUES ($1, $2, $3, $4, $5)`)).
-		WithArgs("integration-user-1", "john_doe", "john@example.com", sqlmock.AnyArg(), fixedClock{}.Now()).
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO users (id, email, password_hash, created_at) VALUES ($1, $2, $3, $4)`)).
+		WithArgs("integration-user-1", "john@example.com", sqlmock.AnyArg(), fixedClock{}.Now()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	request := httptest.NewRequest(http.MethodPost, "/api/v1/users/register", strings.NewReader(`{"username":"john_doe","email":"JOHN@EXAMPLE.COM","password":"StrongPass123"}`))
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/users/register", strings.NewReader(`{"email":"JOHN@EXAMPLE.COM","password":"StrongPass123"}`))
 	request.Header.Set("Content-Type", "application/json")
 	response := httptest.NewRecorder()
 

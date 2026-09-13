@@ -8,7 +8,6 @@ import (
 
 type UserRegistered struct {
 	UserID    values.UserID
-	Username  values.Username
 	Email     values.Email
 	CreatedAt time.Time
 }

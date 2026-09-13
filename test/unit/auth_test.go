@@ -19,7 +19,6 @@ type authRepositoryFake struct {
 	user         ports.AuthUser
 	findErr      error
 	updatedID    values.UserID
-	updatedName  values.Username
 	updatedEmail values.Email
 }
 
@@ -31,8 +30,8 @@ func (fake *authRepositoryFake) FindByID(context.Context, values.UserID) (ports.
 	return fake.user, fake.findErr
 }
 
-func (fake *authRepositoryFake) UpdateProfile(_ context.Context, id values.UserID, username values.Username, email values.Email) error {
-	fake.updatedID, fake.updatedName, fake.updatedEmail = id, username, email
+func (fake *authRepositoryFake) UpdateProfile(_ context.Context, id values.UserID, email values.Email) error {
+	fake.updatedID, fake.updatedEmail = id, email
 	return nil
 }
 
@@ -73,25 +72,23 @@ func (fake blacklistFake) IsRevoked(context.Context, string) (bool, error) { ret
 
 type checkerFake struct{}
 
-func (checkerFake) IsUsernameTaken(context.Context, values.Username) (bool, error) { return false, nil }
-func (checkerFake) IsEmailTaken(context.Context, values.Email) (bool, error)       { return false, nil }
+func (checkerFake) IsEmailTaken(context.Context, values.Email) (bool, error) { return false, nil }
 
 func newAuthService(repository *authRepositoryFake, verifier verifierFake, tokens *tokenServiceFake, blacklist *blacklistFake) applicationUser.AuthService {
 	return applicationUser.NewAuthService(repository, verifier, tokens, blacklist, checkerFake{})
 }
 
 func testAuthUser() ports.AuthUser {
-	username, _ := values.NewUsername("john_doe")
 	email, _ := values.NewEmail("john@example.com")
 	hash, _ := values.NewPasswordHash("hash")
-	return ports.AuthUser{ID: values.NewUserID("user-1"), Username: username, Email: email, PasswordHash: hash, CreatedAt: time.Unix(0, 0).UTC()}
+	return ports.AuthUser{ID: values.NewUserID("user-1"), Email: email, PasswordHash: hash, CreatedAt: time.Unix(0, 0).UTC()}
 }
 
 func TestAuthServiceLogin(t *testing.T) {
 	tokens := &tokenServiceFake{pair: ports.TokenPair{AccessToken: "access", RefreshToken: "refresh"}}
 	service := newAuthService(&authRepositoryFake{user: testAuthUser()}, verifierFake{}, tokens, &blacklistFake{})
 
-	pair, err := service.Login(context.Background(), applicationUser.LoginRequest{Login: "john@example.com", Password: "StrongPass123"})
+	pair, err := service.Login(context.Background(), applicationUser.LoginRequest{Email: "john@example.com", Password: "StrongPass123"})
 	require.NoError(t, err)
 	assert.Equal(t, "access", pair.AccessToken)
 	assert.Equal(t, 1, tokens.issued)
@@ -100,7 +97,7 @@ func TestAuthServiceLogin(t *testing.T) {
 func TestAuthServiceRejectsInvalidCredentials(t *testing.T) {
 	service := newAuthService(&authRepositoryFake{findErr: errors.New("not found")}, verifierFake{}, &tokenServiceFake{}, &blacklistFake{})
 
-	_, err := service.Login(context.Background(), applicationUser.LoginRequest{Login: "unknown", Password: "bad"})
+	_, err := service.Login(context.Background(), applicationUser.LoginRequest{Email: "unknown@example.com", Password: "bad"})
 	require.ErrorIs(t, err, domainErrors.ErrInvalidCredentials)
 }
 
@@ -131,9 +128,8 @@ func TestAuthServiceUpdatesProfile(t *testing.T) {
 	repository := &authRepositoryFake{user: testAuthUser()}
 	service := newAuthService(repository, verifierFake{}, &tokenServiceFake{}, &blacklistFake{})
 
-	profile, err := service.UpdateProfile(context.Background(), values.NewUserID("user-1"), applicationUser.UpdateProfileRequest{Username: "jane_doe", Email: "JANE@EXAMPLE.COM"})
+	profile, err := service.UpdateProfile(context.Background(), values.NewUserID("user-1"), applicationUser.UpdateProfileRequest{Email: "JANE@EXAMPLE.COM"})
 	require.NoError(t, err)
-	assert.Equal(t, "jane_doe", profile.Username.String())
 	assert.Equal(t, "jane@example.com", profile.Email.String())
 	assert.Equal(t, "user-1", repository.updatedID.String())
 }

@@ -31,7 +31,6 @@ func (handler RegisterHandler) ServeHTTP(responseWriter http.ResponseWriter, req
 	}
 
 	result, err := handler.service.Register(request.Context(), applicationUser.RegisterRequest{
-		Username: input.Username,
 		Email:    input.Email,
 		Password: input.Password,
 	})
@@ -48,9 +47,9 @@ func (handler RegisterHandler) ServeHTTP(responseWriter http.ResponseWriter, req
 func writeDomainError(responseWriter http.ResponseWriter, err error) {
 	status := http.StatusInternalServerError
 	switch {
-	case errors.Is(err, domainErrors.ErrInvalidUsername), errors.Is(err, domainErrors.ErrInvalidEmail), errors.Is(err, domainErrors.ErrPasswordTooWeak):
+	case errors.Is(err, domainErrors.ErrInvalidEmail), errors.Is(err, domainErrors.ErrPasswordTooWeak):
 		status = http.StatusBadRequest
-	case errors.Is(err, domainErrors.ErrUsernameTaken), errors.Is(err, domainErrors.ErrEmailTaken):
+	case errors.Is(err, domainErrors.ErrEmailTaken):
 		status = http.StatusConflict
 	}
 	writeError(responseWriter, status, err.Error())

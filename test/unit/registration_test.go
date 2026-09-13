@@ -16,12 +16,7 @@ import (
 )
 
 type uniquenessFake struct {
-	usernameTaken bool
-	emailTaken    bool
-}
-
-func (fake uniquenessFake) IsUsernameTaken(context.Context, values.Username) (bool, error) {
-	return fake.usernameTaken, nil
+	emailTaken bool
 }
 
 func (fake uniquenessFake) IsEmailTaken(context.Context, values.Email) (bool, error) {
@@ -87,7 +82,7 @@ func TestRegistrationServiceRegister(t *testing.T) {
 	publisher := &publisherFake{}
 	service := newService(uniquenessFake{}, repository, publisher)
 
-	id, err := service.Register(context.Background(), "john_doe", "JOHN@EXAMPLE.COM", "StrongPass123")
+	id, err := service.Register(context.Background(), "JOHN@EXAMPLE.COM", "StrongPass123")
 	require.NoError(t, err)
 	assert.Equal(t, "user-1", id.String())
 	require.NotNil(t, repository.saved)
@@ -100,7 +95,7 @@ func TestRegistrationServiceRejectsWeakPassword(t *testing.T) {
 	repository := &repositoryFake{}
 	service := newService(uniquenessFake{}, repository, nil)
 
-	_, err := service.Register(context.Background(), "john_doe", "john@example.com", "password")
+	_, err := service.Register(context.Background(), "john@example.com", "password")
 	require.ErrorIs(t, err, domainErrors.ErrPasswordTooWeak)
 	assert.Nil(t, repository.saved)
 }
@@ -109,7 +104,7 @@ func TestRegistrationServiceRejectsTakenEmail(t *testing.T) {
 	repository := &repositoryFake{}
 	service := newService(uniquenessFake{emailTaken: true}, repository, nil)
 
-	_, err := service.Register(context.Background(), "john_doe", "john@example.com", "StrongPass123")
+	_, err := service.Register(context.Background(), "john@example.com", "StrongPass123")
 	require.ErrorIs(t, err, domainErrors.ErrEmailTaken)
 	assert.Nil(t, repository.saved)
 }

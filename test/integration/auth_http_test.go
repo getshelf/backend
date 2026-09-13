@@ -15,6 +15,7 @@ import (
 	applicationUser "github.com/getshelf/backend/internal/application/user"
 	"github.com/getshelf/backend/internal/domain/user/ports"
 	"github.com/getshelf/backend/internal/domain/user/values"
+	"github.com/getshelf/backend/internal/presentation/rest/middleware"
 	"github.com/getshelf/backend/internal/presentation/rest/routers"
 )
 
@@ -30,7 +31,7 @@ func (fake authHTTPRepository) FindByID(context.Context, values.UserID) (ports.A
 	return fake.user, nil
 }
 
-func (fake authHTTPRepository) UpdateProfile(context.Context, values.UserID, values.Username, values.Email) error {
+func (fake authHTTPRepository) UpdateProfile(context.Context, values.UserID, values.Email) error {
 	return nil
 }
 
@@ -72,17 +73,13 @@ func (fake *authHTTPBlacklist) IsRevoked(_ context.Context, tokenID string) (boo
 
 type authHTTPChecker struct{}
 
-func (authHTTPChecker) IsUsernameTaken(context.Context, values.Username) (bool, error) {
-	return false, nil
-}
 func (authHTTPChecker) IsEmailTaken(context.Context, values.Email) (bool, error) { return false, nil }
 
 func newAuthRouter() http.Handler {
-	username, _ := values.NewUsername("john_doe")
 	email, _ := values.NewEmail("john@example.com")
 	hash, _ := values.NewPasswordHash("hash")
 	service := applicationUser.NewAuthService(
-		authHTTPRepository{user: ports.AuthUser{ID: values.NewUserID("user-1"), Username: username, Email: email, PasswordHash: hash, CreatedAt: time.Unix(0, 0).UTC()}},
+		authHTTPRepository{user: ports.AuthUser{ID: values.NewUserID("user-1"), Email: email, PasswordHash: hash, CreatedAt: time.Unix(0, 0).UTC()}},
 		authHTTPVerifier{},
 		authHTTPTokenService{pair: ports.TokenPair{AccessToken: "access-token", RefreshToken: "refresh-token"}},
 		&authHTTPBlacklist{revoked: map[string]bool{}},
@@ -92,7 +89,7 @@ func newAuthRouter() http.Handler {
 		routers.RegisterHandler{},
 		routers.NewAuthHandler(service),
 		func(next http.Handler) http.Handler {
-			return routers.NewAuthMiddleware(authHTTPTokenService{}, &authHTTPBlacklist{revoked: map[string]bool{}})(next)
+			return middleware.NewAuthMiddleware(authHTTPTokenService{}, &authHTTPBlacklist{revoked: map[string]bool{}})(next)
 		},
 	)
 }
@@ -109,10 +106,10 @@ func TestAuthHTTPHandlers(t *testing.T) {
 		want   int
 		match  string
 	}{
-		{name: "login", method: http.MethodPost, path: "/api/v1/users/login", body: `{"login":"john@example.com","password":"StrongPass123"}`, want: http.StatusOK, match: `"access_token":"access-token"`},
+		{name: "login", method: http.MethodPost, path: "/api/v1/users/login", body: `{"email":"john@example.com","password":"StrongPass123"}`, want: http.StatusOK, match: `"access_token":"access-token"`},
 		{name: "refresh", method: http.MethodPost, path: "/api/v1/users/refresh", body: `{"refresh_token":"refresh-token"}`, want: http.StatusOK, match: `"refresh_token":"refresh-token"`},
-		{name: "profile get", method: http.MethodGet, path: "/api/v1/users/profile", token: "access-token", want: http.StatusOK, match: `"username":"john_doe"`},
-		{name: "profile patch", method: http.MethodPatch, path: "/api/v1/users/profile", body: `{"username":"jane_doe","email":"jane@example.com"}`, token: "access-token", want: http.StatusOK, match: `"email":"jane@example.com"`},
+		{name: "profile get", method: http.MethodGet, path: "/api/v1/users/profile", token: "access-token", want: http.StatusOK, match: `"email":"john@example.com"`},
+		{name: "profile patch", method: http.MethodPatch, path: "/api/v1/users/profile", body: `{"email":"jane@example.com"}`, token: "access-token", want: http.StatusOK, match: `"email":"jane@example.com"`},
 		{name: "logout", method: http.MethodPost, path: "/api/v1/users/logout", body: `{"refresh_token":"refresh-token"}`, token: "access-token", want: http.StatusNoContent},
 	}
 

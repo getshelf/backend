@@ -6,6 +6,7 @@ import (
 	"go.uber.org/fx"
 
 	"github.com/getshelf/backend/internal/presentation/rest"
+	"github.com/getshelf/backend/internal/presentation/rest/middleware"
 	"github.com/getshelf/backend/internal/presentation/rest/routers"
 )
 
@@ -14,7 +15,7 @@ func server() fx.Option {
 		fx.Provide(
 			routers.NewRegisterHandler,
 			routers.NewAuthHandler,
-			routers.NewAuthMiddleware,
+			middleware.NewAuthMiddleware,
 			fx.Annotate(routers.NewRouter, fx.As(new(http.Handler))),
 			rest.NewHTTPServer,
 		),

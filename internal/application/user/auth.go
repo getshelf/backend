@@ -22,12 +22,12 @@ func NewAuthService(repository ports.AuthRepository, hasher ports.PasswordVerifi
 }
 
 type LoginRequest struct {
-	Login    string
+	Email    string
 	Password string
 }
 
 func (service AuthService) Login(ctx context.Context, request LoginRequest) (ports.TokenPair, error) {
-	user, err := service.repository.FindByLogin(ctx, request.Login)
+	user, err := service.repository.FindByLogin(ctx, request.Email)
 	if err != nil {
 		return ports.TokenPair{}, domainErrors.ErrInvalidCredentials
 	}
@@ -71,7 +71,6 @@ func (service AuthService) Logout(ctx context.Context, accessToken string, refre
 
 type Profile struct {
 	ID        values.UserID
-	Username  values.Username
 	Email     values.Email
 	CreatedAt time.Time
 }
@@ -85,8 +84,7 @@ func (service AuthService) Profile(ctx context.Context, id values.UserID) (Profi
 }
 
 type UpdateProfileRequest struct {
-	Username string
-	Email    string
+	Email string
 }
 
 func (service AuthService) UpdateProfile(ctx context.Context, id values.UserID, request UpdateProfileRequest) (Profile, error) {
@@ -94,22 +92,9 @@ func (service AuthService) UpdateProfile(ctx context.Context, id values.UserID, 
 	if err != nil {
 		return Profile{}, domainErrors.ErrUserNotFound
 	}
-	username, err := values.NewUsername(request.Username)
-	if err != nil {
-		return Profile{}, err
-	}
 	email, err := values.NewEmail(request.Email)
 	if err != nil {
 		return Profile{}, err
-	}
-	if username != current.Username {
-		taken, err := service.checker.IsUsernameTaken(ctx, username)
-		if err != nil {
-			return Profile{}, err
-		}
-		if taken {
-			return Profile{}, domainErrors.ErrUsernameTaken
-		}
 	}
 	if email != current.Email {
 		taken, err := service.checker.IsEmailTaken(ctx, email)
@@ -120,13 +105,13 @@ func (service AuthService) UpdateProfile(ctx context.Context, id values.UserID, 
 			return Profile{}, domainErrors.ErrEmailTaken
 		}
 	}
-	if err := service.repository.UpdateProfile(ctx, id, username, email); err != nil {
+	if err := service.repository.UpdateProfile(ctx, id, email); err != nil {
 		return Profile{}, err
 	}
-	current.Username, current.Email = username, email
+	current.Email = email
 	return profileFromUser(current), nil
 }
 
 func profileFromUser(user ports.AuthUser) Profile {
-	return Profile{ID: user.ID, Username: user.Username, Email: user.Email, CreatedAt: user.CreatedAt}
+	return Profile{ID: user.ID, Email: user.Email, CreatedAt: user.CreatedAt}
 }

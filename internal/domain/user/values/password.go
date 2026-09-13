@@ -9,14 +9,13 @@ import (
 
 type PlainPassword string
 
-func NewPlainPassword(password string, username Username, email Email) (PlainPassword, error) {
+func NewPlainPassword(password string, email Email) (PlainPassword, error) {
 	if len([]rune(password)) < 8 || !hasLetter(password) || !hasDigit(password) {
 		return "", domainErrors.ErrPasswordTooWeak
 	}
 
 	passwordLower := strings.ToLower(password)
-	if strings.Contains(passwordLower, strings.ToLower(username.String())) ||
-		strings.Contains(passwordLower, strings.ToLower(email.String())) {
+	if strings.Contains(passwordLower, strings.ToLower(email.String())) {
 		return "", domainErrors.ErrPasswordTooWeak
 	}
 	return PlainPassword(password), nil

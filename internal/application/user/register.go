@@ -8,7 +8,6 @@ import (
 )
 
 type RegisterRequest struct {
-	Username string
 	Email    string
 	Password string
 }
@@ -26,7 +25,7 @@ func NewRegistrationService(domain userService.RegistrationService) Registration
 }
 
 func (service RegistrationService) Register(ctx context.Context, request RegisterRequest) (RegisterResponse, error) {
-	id, err := service.domain.Register(ctx, request.Username, request.Email, request.Password)
+	id, err := service.domain.Register(ctx, request.Email, request.Password)
 	if err != nil {
 		return RegisterResponse{}, err
 	}

@@ -27,12 +27,6 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 	return UserRepository{db: db}
 }
 
-func (repository UserRepository) IsUsernameTaken(ctx context.Context, username values.Username) (bool, error) {
-	var exists bool
-	err := repository.query(ctx).QueryRowxContext(ctx, `SELECT EXISTS (SELECT 1 FROM users WHERE username = $1)`, username.String()).Scan(&exists)
-	return exists, err
-}
-
 func (repository UserRepository) IsEmailTaken(ctx context.Context, email values.Email) (bool, error) {
 	var exists bool
 	err := repository.query(ctx).QueryRowxContext(ctx, `SELECT EXISTS (SELECT 1 FROM users WHERE email = $1)`, email.String()).Scan(&exists)
@@ -40,13 +34,11 @@ func (repository UserRepository) IsEmailTaken(ctx context.Context, email values.
 }
 
 func (repository UserRepository) Save(ctx context.Context, user ports.User) error {
-	_, err := repository.query(ctx).ExecContext(ctx, `INSERT INTO users (id, username, email, password_hash, created_at) VALUES ($1, $2, $3, $4, $5)`, user.ID().String(), user.Username().String(), user.Email().String(), user.PasswordHash().String(), user.CreatedAt())
+	_, err := repository.query(ctx).ExecContext(ctx, `INSERT INTO users (id, email, password_hash, created_at) VALUES ($1, $2, $3, $4)`, user.ID().String(), user.Email().String(), user.PasswordHash().String(), user.CreatedAt())
 	if err != nil {
 		var postgresError *pq.Error
 		if errors.As(err, &postgresError) && postgresError.Code == "23505" {
 			switch postgresError.Constraint {
-			case "users_username_unique":
-				return domainErrors.ErrUsernameTaken
 			case "users_email_unique":
 				return domainErrors.ErrEmailTaken
 			}
@@ -57,21 +49,21 @@ func (repository UserRepository) Save(ctx context.Context, user ports.User) erro
 }
 
 func (repository UserRepository) FindByLogin(ctx context.Context, login string) (ports.AuthUser, error) {
-	return repository.findUser(ctx, `SELECT id, username, email, password_hash, created_at FROM users WHERE username = $1 OR email = $1 LIMIT 1`, login)
+	return repository.findUser(ctx, `SELECT id, email, password_hash, created_at FROM users WHERE email = $1 LIMIT 1`, login)
 }
 
 func (repository UserRepository) FindByID(ctx context.Context, id values.UserID) (ports.AuthUser, error) {
-	return repository.findUser(ctx, `SELECT id, username, email, password_hash, created_at FROM users WHERE id = $1`, id.String())
+	return repository.findUser(ctx, `SELECT id, email, password_hash, created_at FROM users WHERE id = $1`, id.String())
 }
 
-func (repository UserRepository) UpdateProfile(ctx context.Context, id values.UserID, username values.Username, email values.Email) error {
-	_, err := repository.query(ctx).ExecContext(ctx, `UPDATE users SET username = $1, email = $2 WHERE id = $3`, username.String(), email.String(), id.String())
+func (repository UserRepository) UpdateProfile(ctx context.Context, id values.UserID, email values.Email) error {
+	_, err := repository.query(ctx).ExecContext(ctx, `UPDATE users SET email = $1 WHERE id = $2`, email.String(), id.String())
 	return err
 }
 
 func (repository UserRepository) findUser(ctx context.Context, query string, args ...any) (ports.AuthUser, error) {
 	var user ports.AuthUser
-	err := repository.query(ctx).QueryRowxContext(ctx, query, args...).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
+	err := repository.query(ctx).QueryRowxContext(ctx, query, args...).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.CreatedAt)
 	return user, err
 }
 

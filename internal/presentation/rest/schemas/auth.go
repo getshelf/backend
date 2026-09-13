@@ -1,7 +1,7 @@
 package schemas
 
 type LoginRequest struct {
-	Login    string `json:"login"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -16,12 +16,14 @@ type RefreshRequest struct {
 
 type ProfileResponse struct {
 	ID        string `json:"id"`
-	Username  string `json:"username"`
 	Email     string `json:"email"`
 	CreatedAt string `json:"created_at"`
 }
 
 type UpdateProfileRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	Email string `json:"email"`
+}
+
+type VerifyEmailRequest struct {
+	Token string `json:"token"`
 }

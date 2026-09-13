@@ -23,16 +23,12 @@ func NewRegistrationService(checker ports.UniquenessChecker, repo ports.UserRepo
 	return RegistrationService{checker: checker, repo: repo, hasher: hasher, id: id, clock: clock, tx: tx, publisher: publisher}
 }
 
-func (service RegistrationService) Register(ctx context.Context, rawUsername string, rawEmail string, rawPassword string) (values.UserID, error) {
-	username, err := values.NewUsername(rawUsername)
-	if err != nil {
-		return "", err
-	}
+func (service RegistrationService) Register(ctx context.Context, rawEmail string, rawPassword string) (values.UserID, error) {
 	email, err := values.NewEmail(rawEmail)
 	if err != nil {
 		return "", err
 	}
-	password, err := values.NewPlainPassword(rawPassword, username, email)
+	password, err := values.NewPlainPassword(rawPassword, email)
 	if err != nil {
 		return "", err
 	}
@@ -48,7 +44,7 @@ func (service RegistrationService) Register(ctx context.Context, rawUsername str
 
 	var user entities.User
 	err = service.tx.Do(ctx, func(txContext context.Context) error {
-		user, err = entities.NewUser(txContext, id, username, email, hash, service.checker, now)
+		user, err = entities.NewUser(txContext, id, email, hash, service.checker, now)
 		if err != nil {
 			return err
 		}
@@ -59,7 +55,7 @@ func (service RegistrationService) Register(ctx context.Context, rawUsername str
 	}
 
 	if service.publisher != nil {
-		err = service.publisher.Publish(ctx, events.UserRegistered{UserID: user.ID(), Username: user.Username(), Email: user.Email(), CreatedAt: user.CreatedAt()})
+		err = service.publisher.Publish(ctx, events.UserRegistered{UserID: user.ID(), Email: user.Email(), CreatedAt: user.CreatedAt()})
 		if err != nil {
 			return "", err
 		}
