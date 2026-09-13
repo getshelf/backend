@@ -19,7 +19,8 @@ vet:
 	go vet ./...
 
 build:
-	go build ./cmd/api
+	mkdir -p bin
+	go build -o bin/api ./cmd/api
 
 migration-create:
 	@test -n "$(name)" || (echo "usage: make migration-create name=create_users" && exit 1)
