@@ -23,3 +23,11 @@ func envInt(key string, fallback int) int {
 	}
 	return value
 }
+
+func envBool(key string, fallback bool) bool {
+	value, err := strconv.ParseBool(env(key, strconv.FormatBool(fallback)))
+	if err != nil {
+		return fallback
+	}
+	return value
+}

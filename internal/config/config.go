@@ -13,6 +13,7 @@ type Config struct {
 	HTTP  HTTPConfig
 	JWT   JWTConfig
 	Redis RedisConfig
+	SMTP  SMTPConfig
 }
 
 type JWTConfig struct {
@@ -60,6 +61,15 @@ func (config HTTPConfig) Address() string {
 	return config.Host + ":" + strconv.Itoa(config.Port)
 }
 
+type SMTPConfig struct {
+	Password string
+	Host     string
+	Port     int
+	User     string
+	UseSSL   bool
+	DevMode  bool
+}
+
 func Load() (Config, error) {
 	if err := godotenv.Load(); err != nil {
 		// Environment variables are also supported in containers.
@@ -82,8 +92,19 @@ func Load() (Config, error) {
 		JWT: JWTConfig{
 			Secret:     env("JWT_SECRET", "change-me-in-production"),
 			AccessTTL:  time.Duration(envInt("JWT_ACCESS_TTL_MINUTES", 15)) * time.Minute,
-			RefreshTTL: time.Duration(envInt("JWT_REFRESH_TTL_HOURS", 168)) * time.Hour,
+			RefreshTTL: time.Duration(envInt("JWT_REFRESH_TTL_HOURS", 24)) * time.Hour,
 		},
-		Redis: RedisConfig{Host: env("REDIS_HOST", "localhost"), Port: envInt("REDIS_PORT", 6379)},
+		Redis: RedisConfig{
+			Host: env("REDIS_HOST", "localhost"),
+			Port: envInt("REDIS_PORT", 6379),
+		},
+		SMTP: SMTPConfig{
+			Password: env("SMTP_PASSWORD", "change-me-in-production"),
+			Host:     env("SMTP_HOST", "change-me-in-production"),
+			Port:     envInt("SMTP_PORT", 465),
+			User:     env("SMTP_USER", "change-me-in-production"),
+			UseSSL:   envBool("SMTP_USESSL", true),
+			DevMode:  envBool("SMTP_DEV_MODE", true),
+		},
 	}, nil
 }

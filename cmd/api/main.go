@@ -1,7 +1,7 @@
 package main
 
-import "go.uber.org/fx"
+import "fmt"
 
 func main() {
-	fx.New(di(), server()).Run()
+	fmt.Println("OK")
 }
