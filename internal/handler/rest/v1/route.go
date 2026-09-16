@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/danielgtaylor/huma/v2"
+	router "github.com/getshelf/backend/internal/handler/rest/v1/router"
 )
 
 func RegisterGroup(public huma.API, protected huma.API) {
@@ -12,5 +13,5 @@ func RegisterGroup(public huma.API, protected huma.API) {
 }
 
 func RegisterRoutes(public huma.API, protected huma.API) {
-	RegisterUserGroup(public, protected)
+	router.RegisterUserGroup(public, protected)
 }
