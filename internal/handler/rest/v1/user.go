@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/getshelf/backend/internal/controller/restapi/schema"
+	"github.com/getshelf/backend/internal/handler/rest/v1/schema"
 )
 
 func RegisterUserGroup(public huma.API, protected huma.API) {
