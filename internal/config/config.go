@@ -38,18 +38,11 @@ type DBConfig struct {
 	Password string
 	Name     string
 	SSLMode  string
+	DATABASE_URL *url.URL
 }
 
 func (config DBConfig) URL() string {
-	return (&url.URL{
-		Scheme: "postgres",
-		User:   url.UserPassword(config.Username, config.Password),
-		Host:   config.Host + ":" + strconv.Itoa(config.Port),
-		Path:   config.Name,
-		RawQuery: url.Values{
-			"sslmode": []string{config.SSLMode},
-		}.Encode(),
-	}).String()
+	return (config.DATABASE_URL).String()
 }
 
 type HTTPConfig struct {
@@ -78,12 +71,7 @@ func Load() (Config, error) {
 
 	return Config{
 		DB: DBConfig{
-			Host:     env("DB_HOST", "localhost"),
-			Port:     envInt("DB_PORT", 5432),
-			Username: env("DB_USERNAME", "getshelf"),
-			Password: env("DB_PASSWORD", "getshelf"),
-			Name:     env("DB_NAME", "getshelf"),
-			SSLMode:  env("DB_SSLMODE", "disable"),
+			DATABASE_URL: envURL("DATABASE_URL", "postgres://getshelf:getshelf@localhost:5432/getshelf?sslmode=disable"),
 		},
 		HTTP: HTTPConfig{
 			Host: env("HTTP_HOST", "0.0.0.0"),
