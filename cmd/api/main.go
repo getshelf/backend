@@ -71,6 +71,7 @@ func main() {
 	sessionStore := postgres.NewSessionStore(db)
 	sessions := session.NewService(sessionStore, time.Hour * 24 * 14)
 
+
 	handler := httpapi.New(httpapi.Dependencies{
 		Accounts: accounts,
 		Logger: logger,
