@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"net/mail"
 	"strings"
 	"time"
@@ -22,12 +23,12 @@ type Service struct {
 }
 
 type RegisterInput struct {
-	Email        string
-	Password     string
+	Email    string
+	Password string
 }
 
 type RegisterOutput struct {
-	ID           string
+	ID string
 }
 
 func NewService(store Store) *Service {
@@ -51,6 +52,46 @@ func newService(
 		newID:        newID,
 		now:          now,
 	}
+}
+
+type AuthenticateInput struct {
+	Email    string
+	Password string
+}
+
+type AuthenticateOutput struct {
+	ID    string
+	Email string
+}
+
+func (service *Service) Authenticate(
+	ctx context.Context,
+	input AuthenticateInput,
+) (AuthenticateOutput, error) {
+	email, err := normalizeEmail(input.Email)
+	if err != nil {
+		return AuthenticateOutput{}, ErrInvalidCredentials
+	}
+
+	found, err := service.store.FindByEmail(ctx, email)
+	if err != nil {
+		return AuthenticateOutput{}, ErrInvalidCredentials
+	}
+
+	log.Println(email, found.PasswordHash)
+
+	err = bcrypt.CompareHashAndPassword(
+		[]byte(found.PasswordHash),
+		[]byte(input.Password),
+	)
+	if err != nil {
+		return AuthenticateOutput{}, ErrInvalidCredentials
+	}
+
+	return AuthenticateOutput{
+		ID:    found.ID,
+		Email: found.Email,
+	}, nil
 }
 
 func (service *Service) Register(
@@ -77,13 +118,12 @@ func (service *Service) Register(
 	}
 
 	err = service.store.Create(ctx, CreateAccountParams{
-		ID: id,
-		Email: email,
+		ID:           id,
+		Email:        email,
 		PasswordHash: passwordHash,
-		CreatedAt: service.now().UTC(),
-		UpdatedAt: service.now().UTC(),
+		CreatedAt:    service.now().UTC(),
+		UpdatedAt:    service.now().UTC(),
 	})
-
 
 	if err != nil {
 		if errors.Is(err, ErrEmailTaken) {

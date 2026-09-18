@@ -15,3 +15,10 @@ type Account struct {
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
+
+type Session struct {
+	TokenHash []byte
+	AccountID string
+	ExpiresAt time.Time
+	CreatedAt time.Time
+}

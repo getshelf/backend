@@ -7,11 +7,13 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/getshelf/backend/internal/adapters/httpapi"
 	"github.com/getshelf/backend/internal/adapters/postgres"
 	"github.com/getshelf/backend/internal/config"
 	"github.com/getshelf/backend/internal/modules/account"
+	"github.com/getshelf/backend/internal/modules/session"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -43,8 +45,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		log.Fatal(err)
+	m.Log = migrationLogger{logger: logger}
+
+	if err := m.Up(); err != nil  {
+		if errors.Is(err, migrate.ErrNoChange) {
+			logger.Info("database migrations already up to date")
+		} else {
+			log.Fatal(err)
+		}
 	}
 
 	db, err := postgres.Open(
@@ -60,9 +68,13 @@ func main() {
 	accountStore := postgres.NewAccountStore(db)
 	accounts := account.NewService(accountStore)
 
+	sessionStore := postgres.NewSessionStore(db)
+	sessions := session.NewService(sessionStore, time.Hour * 24 * 14)
+
 	handler := httpapi.New(httpapi.Dependencies{
 		Accounts: accounts,
 		Logger: logger,
+		Sessions: sessions,
 	})
 
 	server := &http.Server{

@@ -20,18 +20,18 @@ func NewAccountStore(db *sql.DB) *AccountStore {
 	}
 }
 
-func (store *AccountStore) Create (
+func (store *AccountStore) Create(
 	ctx context.Context,
 	params account.CreateAccountParams,
 ) error {
 	err := store.queries.CreateAccount(
 		ctx,
 		sqlcgen.CreateAccountParams{
-			ID: params.ID,
-			Email: params.Email,
+			ID:           params.ID,
+			Email:        params.Email,
 			PasswordHash: params.PasswordHash,
-			CreatedAt: params.CreatedAt,
-			UpdatedAt: params.UpdatedAt,
+			CreatedAt:    params.CreatedAt,
+			UpdatedAt:    params.UpdatedAt,
 		},
 	)
 
@@ -50,22 +50,22 @@ func (store *AccountStore) FindByEmail(
 	ctx context.Context,
 	email string,
 ) (account.Account, error) {
-
 	acc, err := store.queries.FindAccountByEmail(
 		ctx,
 		email,
 	)
 
 	if err != nil {
-		return account.Account{
-			ID:        acc.ID,
-			Email:     acc.Email,
-			CreatedAt: acc.CreatedAt,
-			UpdatedAt: acc.UpdatedAt,
-		}, err
+		return account.Account{}, err
 	}
 
-	return account.Account{}, err
+	return account.Account{
+		ID:           acc.ID,
+		PasswordHash: acc.PasswordHash,
+		Email:        acc.Email,
+		CreatedAt:    acc.CreatedAt,
+		UpdatedAt:    acc.UpdatedAt,
+	}, nil
 }
 
 var _ account.Store = (*AccountStore)(nil)
