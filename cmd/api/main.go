@@ -2,15 +2,20 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
 
-	"github.com/getshelf/backend/internal/config"
 	"github.com/getshelf/backend/internal/adapters/httpapi"
 	"github.com/getshelf/backend/internal/adapters/postgres"
+	"github.com/getshelf/backend/internal/config"
 	"github.com/getshelf/backend/internal/modules/account"
+
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func main() {
@@ -26,6 +31,19 @@ func main() {
 	appConfig, err := config.Load()
 
 	if err != nil {
+		log.Fatal(err)
+	}
+
+	m, err := migrate.New(
+		"file://db/migrations",
+		appConfig.DB.URL(),
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		log.Fatal(err)
 	}
 

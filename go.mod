@@ -10,6 +10,7 @@ require (
 
 require (
 	github.com/fxamacker/cbor/v2 v2.9.2 // indirect
+	github.com/golang-migrate/migrate/v4 v4.20.1 // indirect
 	github.com/lib/pq v1.12.3 // indirect
 	github.com/stretchr/testify v1.12.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

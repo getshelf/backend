@@ -3,33 +3,69 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 
+	"github.com/getshelf/backend/internal/adapters/postgres/sqlcgen"
 	"github.com/getshelf/backend/internal/modules/account"
-	// "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 type AccountStore struct {
-	db *sql.DB
+	queries *sqlcgen.Queries
 }
 
 func NewAccountStore(db *sql.DB) *AccountStore {
-	return &AccountStore{db: db}
+	return &AccountStore{
+		queries: sqlcgen.New(db),
+	}
 }
 
 func (store *AccountStore) Create (
 	ctx context.Context,
 	params account.CreateAccountParams,
 ) error {
-	return nil
+	err := store.queries.CreateAccount(
+		ctx,
+		sqlcgen.CreateAccountParams{
+			ID: params.ID,
+			Email: params.Email,
+			PasswordHash: params.PasswordHash,
+			CreatedAt: params.CreatedAt,
+			UpdatedAt: params.UpdatedAt,
+		},
+	)
+
+	var postgresError *pq.Error
+
+	if errors.As(err, &postgresError) &&
+		postgresError.Code == "23505" &&
+		postgresError.Constraint == "accounts_email_unique" {
+		return account.ErrEmailTaken
+	}
+
+	return err
 }
 
 func (store *AccountStore) FindByEmail(
 	ctx context.Context,
 	email string,
-) (string, error) {
+) (account.Account, error) {
 
-	// TODO: implement
-	return "", nil
+	acc, err := store.queries.FindAccountByEmail(
+		ctx,
+		email,
+	)
+
+	if err != nil {
+		return account.Account{
+			ID:        acc.ID,
+			Email:     acc.Email,
+			CreatedAt: acc.CreatedAt,
+			UpdatedAt: acc.UpdatedAt,
+		}, err
+	}
+
+	return account.Account{}, err
 }
 
 var _ account.Store = (*AccountStore)(nil)

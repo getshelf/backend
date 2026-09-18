@@ -42,7 +42,6 @@ func registerAccountRoutes(
 			Tags:          []string{"Users"},
 			DefaultStatus: http.StatusCreated,
 
-			// Huma will also document validation and internal errors.
 			Errors: []int{
 				http.StatusConflict,
 			},
