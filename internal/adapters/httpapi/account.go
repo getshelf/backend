@@ -36,10 +36,10 @@ func registerAccountRoutes(
 		huma.Operation{
 			OperationID:   "registerAccount",
 			Method:        http.MethodPost,
-			Path:          "/users/register",
+			Path:          "/auth/register",
 			Summary:       "Register an account",
 			Description:   "Create a Shelf account using an email and password.",
-			Tags:          []string{"Users"},
+			Tags:          []string{"Authentication"},
 			DefaultStatus: http.StatusCreated,
 
 			Errors: []int{
