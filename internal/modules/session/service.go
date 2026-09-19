@@ -85,3 +85,17 @@ func (service *Service) Authenticate(
 
 	return found.AccountID, nil
 }
+
+
+//logout 
+func (service *Service) Logout(ctx context.Context, token string) error {
+	if token == "" {
+		return nil
+	}
+	
+	if err := service.store.DeleteByTokenHash(ctx, hashSessionToken(token)); err != nil {
+		return fmt.Errorf("delete session: %w", err)
+	}
+
+	return nil;
+}
