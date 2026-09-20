@@ -30,14 +30,13 @@ type accountResponse struct {
 	Email string `json:"email"`
 }
 
-//======= logout
 type logoutInput struct {
     Session string `cookie:"session" doc:"Session token set by the login endpoint."`
 }
 type logoutOutput struct {
     SetCookie http.Cookie `header:"Set-Cookie" doc:"Expired session cookie that instructs the browser to delete it."`
 }
-//======
+
 func registerAuthRoutes(
 	api huma.API,
 	accounts *account.Service,
@@ -45,6 +44,7 @@ func registerAuthRoutes(
 	secureCookies bool,
 	logger *slog.Logger,
 ) {
+	// Login
 	huma.Register(
 		api,
 		huma.Operation{
@@ -103,7 +103,7 @@ func registerAuthRoutes(
 		},
 	)
 
-	//logout
+	// Logout
 	huma.Register(
 		api,
 		huma.Operation{
@@ -116,7 +116,7 @@ func registerAuthRoutes(
 			DefaultStatus: http.StatusNoContent,
 		},
 		func(
-			ctx context.Context, 
+			ctx context.Context,
 			input *logoutInput,
 		) (*logoutOutput, error) {
 			if err := sessions.Logout(ctx, input.Session); err != nil {
