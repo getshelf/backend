@@ -14,6 +14,7 @@ import (
 	"github.com/getshelf/backend/internal/config"
 	"github.com/getshelf/backend/internal/modules/account"
 	"github.com/getshelf/backend/internal/modules/session"
+	"github.com/getshelf/backend/internal/modules/collection"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -71,11 +72,15 @@ func main() {
 	sessionStore := postgres.NewSessionStore(db)
 	sessions := session.NewService(sessionStore, time.Hour * 24 * 14)
 
+	collectionStore := postgres.NewCollectionStore(db)
+	collections := collection.NewService(collectionStore)
+
 
 	handler := httpapi.New(httpapi.Dependencies{
 		Accounts: accounts,
 		Logger: logger,
 		Sessions: sessions,
+		Collections: collections,
 	})
 
 	server := &http.Server{

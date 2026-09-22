@@ -21,5 +21,5 @@ type Store interface {
 	FindByEmail(
 		ctx context.Context,
 		email string,
-	) (Account, error) // replace with Account
+	) (Account, error)
 }

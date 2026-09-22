@@ -5,6 +5,7 @@
 package sqlcgen
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -14,6 +15,17 @@ type Account struct {
 	PasswordHash string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+}
+
+type Collection struct {
+	ID        string
+	Title     string
+	Icon      sql.NullString
+	ParentID  sql.NullString
+	OwnerID   string
+	SortOrder int32
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type Session struct {

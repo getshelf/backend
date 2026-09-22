@@ -5,9 +5,8 @@ import (
 	"time"
 )
 
-const sessionCookieName = "shelf_session"
 
-func newSessionCookie(token string, expiresAt time.Time, secure bool) http.Cookie {
+func newSessionCookie(token string, expiresAt time.Time, secure bool, sessionCookieName string) http.Cookie {
 	return http.Cookie{
 		Name:     sessionCookieName,
 		Value:    token,
@@ -20,8 +19,8 @@ func newSessionCookie(token string, expiresAt time.Time, secure bool) http.Cooki
 	}
 }
 
-func clearSessionCookie(secure bool) http.Cookie {
-	cookie := newSessionCookie("", time.Unix(0, 0), secure)
+func clearSessionCookie(secure bool, sessionCookieName string) http.Cookie {
+	cookie := newSessionCookie("", time.Unix(0, 0), secure, sessionCookieName)
 	cookie.MaxAge = -1
 	return cookie
 }

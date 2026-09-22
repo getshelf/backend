@@ -4,6 +4,8 @@ import (
 	"time"
 )
 
+const SessionCookieName = "shelf_session"
+
 type Session struct {
 	TokenHash []byte
 	AccountID string

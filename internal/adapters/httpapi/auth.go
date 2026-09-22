@@ -91,6 +91,7 @@ func registerAuthRoutes(
 					createdSession.Token,
 					createdSession.ExpiresAt,
 					secureCookies,
+					session.SessionCookieName,
 				),
 			}
 
@@ -125,7 +126,7 @@ func registerAuthRoutes(
 			}
 
 			return &logoutOutput{
-				SetCookie: clearSessionCookie(secureCookies),
+				SetCookie: clearSessionCookie(secureCookies, session.SessionCookieName),
 			}, nil
 		},
 	)
