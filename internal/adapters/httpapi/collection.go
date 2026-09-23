@@ -48,7 +48,7 @@ func registerCollectionRoutes(
 			OperationID:   "createCollection",
 			Method:        http.MethodPost,
 			Path:          "/collections",
-			Summary:       "Create a Shelf collection",
+			Summary:       "Create a collection",
 			Tags:          []string{"Collections"},
 			DefaultStatus: http.StatusCreated,
 
