@@ -50,11 +50,16 @@ func (store *CollectionStore) Create(
 		return c.Collection{}, err
 	}
 
+	var parentID *string
+	if collection.ParentID.Valid {
+    	parentID = &collection.ParentID.String
+	}
+
 	return c.Collection{
 		ID:        collection.ID,
 		Title:     collection.Title,
 		Icon:      &collection.Icon.String,
-		ParentID:  &collection.ParentID.String,
+		ParentID:  parentID,
 		OwnerID:   collection.OwnerID,
 		SortOrder: int(collection.SortOrder),
 		CreatedAt: collection.CreatedAt,
