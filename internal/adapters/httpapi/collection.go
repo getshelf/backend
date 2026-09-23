@@ -74,7 +74,7 @@ func registerCollectionRoutes(
 				collection.CreateCollectionInput{
 					Title:     input.Body.Title,
 					Icon:      input.Body.Icon,
-					ParentID:  nil,
+					ParentID:  input.Body.ParentID,
 					OwnerID:   accountID,
 				},
 			)
