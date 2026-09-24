@@ -40,16 +40,28 @@ type CreateCollectionOutput struct {
 	UpdatedAt time.Time
 }
 
+func (service *Service) GetCollection(
+	ctx context.Context,
+	collectionID string,
+	ownerID string,
+) (Collection, error) {
+	collection, err := service.store.Get(ctx, collectionID, ownerID)
+	if err != nil {
+		return Collection{}, err
+	}
+	return collection, nil
+}
+
 func (service *Service) CreateCollection(
 	ctx context.Context,
 	input CreateCollectionInput,
-) (CreateCollectionOutput, error) {
+) (Collection, error) {
 	id, err := service.newID()
 
 	fmt.Println("NEW ID", id)
 
 	if err != nil {
-		return CreateCollectionOutput{}, err
+		return Collection{}, err
 	}
 
 	collection, err := service.store.Create(ctx, CreateCollectionParams{
@@ -62,16 +74,48 @@ func (service *Service) CreateCollection(
 		UpdatedAt: time.Now(),
 	})
 
-	return CreateCollectionOutput{
-		ID:        collection.ID,
-		Title:     collection.Title,
-		Icon:      collection.Icon,
-		ParentID:  collection.ParentID,
-		SortOrder: collection.SortOrder,
-		OwnerID:   collection.OwnerID,
-		CreatedAt: collection.CreatedAt,
-		UpdatedAt: collection.UpdatedAt,
-	}, nil
+	return collection, nil
+}
+
+func (service *Service) UpdateCollection(
+	ctx context.Context,
+	collectionID string,
+	ownerID string,
+	params UpdateCollectionParams,
+) (Collection, error) {
+	existingCollection, err := service.store.Get(ctx, collectionID, ownerID)
+
+	if err != nil {
+		return Collection{}, err
+	}
+
+	if params.Title == "" {
+		params.Title = existingCollection.Title
+	}
+	if params.Icon == nil {
+		params.Icon = existingCollection.Icon
+	}
+	if !params.ParentID.Set {
+		params.ParentID.Set = true
+		params.ParentID.Value = existingCollection.ParentID
+	}
+
+	collection, err := service.store.Update(
+		ctx,
+		collectionID,
+		ownerID,
+		UpdateCollectionParams{
+			Title:     params.Title,
+			Icon:      params.Icon,
+			ParentID:  params.ParentID,
+			UpdatedAt: time.Now(),
+		},
+	)
+	if err != nil {
+		return Collection{}, err
+	}
+
+	return collection, nil
 }
 
 func randomID() (string, error) {

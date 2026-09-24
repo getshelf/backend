@@ -52,7 +52,7 @@ func (store *CollectionStore) Create(
 
 	var parentID *string
 	if collection.ParentID.Valid {
-    	parentID = &collection.ParentID.String
+		parentID = &collection.ParentID.String
 	}
 
 	return c.Collection{
@@ -61,6 +61,77 @@ func (store *CollectionStore) Create(
 		Icon:      &collection.Icon.String,
 		ParentID:  parentID,
 		OwnerID:   collection.OwnerID,
+		SortOrder: int(collection.SortOrder),
+		CreatedAt: collection.CreatedAt,
+		UpdatedAt: collection.UpdatedAt,
+	}, nil
+}
+
+func (store *CollectionStore) Update(
+	ctx context.Context,
+	collectionID string,
+	ownerID string,
+	params c.UpdateCollectionParams,
+) (c.Collection, error) {
+	collection, err := store.queries.UpdateCollection(
+		ctx,
+		sqlcgen.UpdateCollectionParams{
+			ID:        collectionID,
+			Title:     params.Title,
+			Icon:      nullableString(params.Icon),
+			ParentID:  nullableString(params.ParentID.Value),
+			OwnerID:   ownerID,
+			UpdatedAt: params.UpdatedAt,
+		},
+	)
+
+	if err != nil {
+		return c.Collection{}, err
+	}
+
+	var parentID *string
+	if collection.ParentID.Valid {
+		parentID = &collection.ParentID.String
+	}
+
+	return c.Collection{
+		ID:        collection.ID,
+		Title:     collection.Title,
+		Icon:      &collection.Icon.String,
+		ParentID:  parentID,
+		SortOrder: int(collection.SortOrder),
+		CreatedAt: collection.CreatedAt,
+		UpdatedAt: collection.UpdatedAt,
+	}, nil
+}
+
+func (store *CollectionStore) Get(
+	ctx context.Context,
+	collectionID string,
+	ownerID string,
+) (c.Collection, error) {
+	collection, err := store.queries.GetCollection(
+		ctx,
+		sqlcgen.GetCollectionParams{
+			ID:      collectionID,
+			OwnerID: ownerID,
+		},
+	)
+
+	if err != nil {
+		return c.Collection{}, err
+	}
+
+	var parentID *string
+	if collection.ParentID.Valid {
+		parentID = &collection.ParentID.String
+	}
+
+	return c.Collection{
+		ID:        collection.ID,
+		Title:     collection.Title,
+		Icon:      &collection.Icon.String,
+		ParentID:  parentID,
 		SortOrder: int(collection.SortOrder),
 		CreatedAt: collection.CreatedAt,
 		UpdatedAt: collection.UpdatedAt,
