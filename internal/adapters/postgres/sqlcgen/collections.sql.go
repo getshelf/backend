@@ -99,6 +99,45 @@ func (q *Queries) GetCollection(ctx context.Context, arg GetCollectionParams) (C
 	return i, err
 }
 
+const listCollections = `-- name: ListCollections :many
+SELECT id, title, icon, parent_id, owner_id, sort_order, created_at, updated_at
+FROM collections
+WHERE owner_id = $1
+ORDER BY sort_order
+`
+
+func (q *Queries) ListCollections(ctx context.Context, ownerID string) ([]Collection, error) {
+	rows, err := q.db.QueryContext(ctx, listCollections, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Collection
+	for rows.Next() {
+		var i Collection
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Icon,
+			&i.ParentID,
+			&i.OwnerID,
+			&i.SortOrder,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateCollection = `-- name: UpdateCollection :one
 UPDATE collections
 SET

@@ -52,6 +52,18 @@ func (service *Service) GetCollection(
 	return collection, nil
 }
 
+func (service *Service) ListCollections(
+	ctx context.Context,
+	ownerID string,
+) ([]Collection, error) {
+	collections, err := service.store.List(ctx, &ownerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return collections, nil
+}
+
 func (service *Service) CreateCollection(
 	ctx context.Context,
 	input CreateCollectionInput,

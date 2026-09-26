@@ -39,3 +39,9 @@ SET
 WHERE id = $5
   AND owner_id = $6
 RETURNING *;
+
+-- name: ListCollections :many
+SELECT *
+FROM collections
+WHERE owner_id = $1
+ORDER BY sort_order;

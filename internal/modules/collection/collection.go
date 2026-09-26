@@ -9,6 +9,7 @@ type Collection struct {
 	ParentID  *string
 	OwnerID   string
 	SortOrder int
+	Collections []Collection
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

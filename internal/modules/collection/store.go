@@ -43,4 +43,8 @@ type Store interface {
 		ownerID string,
 		params UpdateCollectionParams,
 	) (Collection, error)
+	List(
+		ctx context.Context,
+		parentID *string,
+	) ([]Collection, error)
 }

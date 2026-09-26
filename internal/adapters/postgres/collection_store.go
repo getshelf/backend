@@ -137,3 +137,63 @@ func (store *CollectionStore) Get(
 		UpdatedAt: collection.UpdatedAt,
 	}, nil
 }
+
+func (store *CollectionStore) List(
+	ctx context.Context,
+	ownerID *string,
+) ([]c.Collection, error) {
+	collections, err := store.queries.ListCollections(
+		ctx,
+		*ownerID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := nest(collections)
+
+	return result, nil
+}
+
+func nest(collections []sqlcgen.Collection) []c.Collection {
+	collectionsOf := make(map[string][]c.Collection, len(collections))
+	for _, collection := range collections {
+		key := ""
+		if collection.ParentID.Valid {
+			key = *&collection.ParentID.String
+		}
+		collectionsOf[key] = append(collectionsOf[key], c.Collection{
+			ID:        collection.ID,
+			Title:     collection.Title,
+			Icon:      &collection.Icon.String,
+			ParentID:  &collection.ParentID.String,
+			SortOrder: int(collection.SortOrder),
+			CreatedAt: collection.CreatedAt,
+			UpdatedAt: collection.UpdatedAt,
+			Collections: []c.Collection{},
+		})
+	}
+
+	var walk func(parentKey string) []c.Collection
+	walk = func(parentKey string) []c.Collection {
+		collections := collectionsOf[parentKey]
+		items := make([]c.Collection, len(collections))
+
+		for i, collection := range collections {
+			items[i] = c.Collection{
+				ID:        collection.ID,
+				Title:     collection.Title,
+				Icon:      collection.Icon,
+				ParentID:  collection.ParentID,
+				SortOrder: collection.SortOrder,
+				CreatedAt: collection.CreatedAt,
+				UpdatedAt: collection.UpdatedAt,
+				Collections: walk(collection.ID),
+			}
+		}
+		return items
+	}
+
+	return walk("")
+}
