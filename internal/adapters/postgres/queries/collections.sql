@@ -1,3 +1,9 @@
+-- name: GetCollection :one
+SELECT *
+FROM collections
+WHERE id = $1
+  AND owner_id = $2;
+
 -- name: CreateCollection :one
 INSERT INTO collections (
     id,
@@ -22,3 +28,20 @@ INSERT INTO collections (
     $6,
     $7
 ) RETURNING *;
+
+-- name: UpdateCollection :one
+UPDATE collections
+SET
+    title = $1,
+    icon = $2,
+    parent_id = $3,
+    updated_at = $4
+WHERE id = $5
+  AND owner_id = $6
+RETURNING *;
+
+-- name: ListCollections :many
+SELECT *
+FROM collections
+WHERE owner_id = $1
+ORDER BY sort_order;

@@ -70,3 +70,114 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 	)
 	return i, err
 }
+
+const getCollection = `-- name: GetCollection :one
+SELECT id, title, icon, parent_id, owner_id, sort_order, created_at, updated_at
+FROM collections
+WHERE id = $1
+  AND owner_id = $2
+`
+
+type GetCollectionParams struct {
+	ID      string
+	OwnerID string
+}
+
+func (q *Queries) GetCollection(ctx context.Context, arg GetCollectionParams) (Collection, error) {
+	row := q.db.QueryRowContext(ctx, getCollection, arg.ID, arg.OwnerID)
+	var i Collection
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Icon,
+		&i.ParentID,
+		&i.OwnerID,
+		&i.SortOrder,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const listCollections = `-- name: ListCollections :many
+SELECT id, title, icon, parent_id, owner_id, sort_order, created_at, updated_at
+FROM collections
+WHERE owner_id = $1
+ORDER BY sort_order
+`
+
+func (q *Queries) ListCollections(ctx context.Context, ownerID string) ([]Collection, error) {
+	rows, err := q.db.QueryContext(ctx, listCollections, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Collection
+	for rows.Next() {
+		var i Collection
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Icon,
+			&i.ParentID,
+			&i.OwnerID,
+			&i.SortOrder,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateCollection = `-- name: UpdateCollection :one
+UPDATE collections
+SET
+    title = $1,
+    icon = $2,
+    parent_id = $3,
+    updated_at = $4
+WHERE id = $5
+  AND owner_id = $6
+RETURNING id, title, icon, parent_id, owner_id, sort_order, created_at, updated_at
+`
+
+type UpdateCollectionParams struct {
+	Title     string
+	Icon      sql.NullString
+	ParentID  sql.NullString
+	UpdatedAt time.Time
+	ID        string
+	OwnerID   string
+}
+
+func (q *Queries) UpdateCollection(ctx context.Context, arg UpdateCollectionParams) (Collection, error) {
+	row := q.db.QueryRowContext(ctx, updateCollection,
+		arg.Title,
+		arg.Icon,
+		arg.ParentID,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.OwnerID,
+	)
+	var i Collection
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Icon,
+		&i.ParentID,
+		&i.OwnerID,
+		&i.SortOrder,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
