@@ -6,10 +6,11 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
+	m "github.com/getshelf/backend/internal/adapters/httpapi/middlewares"
 	"github.com/getshelf/backend/internal/modules/account"
 	"github.com/getshelf/backend/internal/modules/collection"
+	"github.com/getshelf/backend/internal/modules/item"
 	"github.com/getshelf/backend/internal/modules/session"
-	m "github.com/getshelf/backend/internal/adapters/httpapi/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -18,6 +19,7 @@ type Dependencies struct {
 	Accounts *account.Service
 	Sessions *session.Service
 	Collections *collection.Service
+	Items *item.Service
 	Logger   *slog.Logger
 }
 
@@ -63,6 +65,13 @@ func New(dependencies Dependencies) http.Handler {
 	registerCollectionRoutes(
 		authenticated,
 		dependencies.Collections,
+		dependencies.Sessions,
+		dependencies.Logger,
+	)
+
+	registerItemRoutes(
+		authenticated,
+		dependencies.Items,
 		dependencies.Sessions,
 		dependencies.Logger,
 	)

@@ -24,11 +24,11 @@ type CollectionItem struct {
 	ID          string           `json:"id"`
 	Title       string           `json:"title"`
 	Icon        *string          `json:"icon"`
-	ParentID    *string          `json:"parent_id"`
-	SortOrder   int              `json:"sort_order"`
+	ParentID    *string          `json:"parentId"`
+	SortOrder   int              `json:"sortOrder"`
 	Collections []CollectionItem `json:"collections"`
-	CreatedAt   time.Time        `json:"created_at"`
-	UpdatedAt   time.Time        `json:"updated_at"`
+	CreatedAt   time.Time        `json:"createdAt"`
+	UpdatedAt   time.Time        `json:"updatedAt"`
 }
 
 type getCollectionInput struct {

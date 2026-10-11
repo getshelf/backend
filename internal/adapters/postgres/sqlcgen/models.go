@@ -6,7 +6,10 @@ package sqlcgen
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
+
+	"github.com/sqlc-dev/pqtype"
 )
 
 type Account struct {
@@ -15,6 +18,26 @@ type Account struct {
 	PasswordHash string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+}
+
+type Asset struct {
+	ID              string
+	OwnerID         string
+	Kind            string
+	OriginalUrl     sql.NullString
+	StorageKey      sql.NullString
+	FileName        sql.NullString
+	MimeType        sql.NullString
+	ByteSize        sql.NullInt64
+	ChechjsumSha256 sql.NullString
+	Width           sql.NullInt32
+	Height          sql.NullInt32
+	DurationMs      sql.NullInt64
+	DownloadStatus  string
+	DownloadError   sql.NullString
+	Metadata        json.RawMessage
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 type Collection struct {
@@ -26,6 +49,59 @@ type Collection struct {
 	SortOrder int32
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type Item struct {
+	ID                string
+	OwnerID           string
+	Kind              string
+	Title             sql.NullString
+	Description       sql.NullString
+	ContentText       sql.NullString
+	ContentHtml       sql.NullString
+	ContentStructured pqtype.NullRawMessage
+	SourceUrl         sql.NullString
+	CanonicalUrl      sql.NullString
+	Provider          sql.NullString
+	ExternalID        sql.NullString
+	AuthorName        sql.NullString
+	AuthorHandle      sql.NullString
+	AuthorUrl         sql.NullString
+	PublishedAt       sql.NullTime
+	UserNote          sql.NullString
+	IsFavorite        bool
+	Metadata          json.RawMessage
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+}
+
+type ItemAttachment struct {
+	ID         string
+	OwnerID    string
+	ItemID     string
+	AssetID    string
+	Role       string
+	Position   int32
+	Caption    sql.NullString
+	AltText    sql.NullString
+	ContentRef sql.NullString
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+type ItemExtraction struct {
+	ItemID           string
+	Status           string
+	Extractor        sql.NullString
+	ExtractorVersion sql.NullString
+	AttemptCount     int32
+	LastError        sql.NullString
+	Warnings         []string
+	RawResponseKey   sql.NullString
+	StartedAt        sql.NullTime
+	ExtractedAt      sql.NullTime
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 type Session struct {
