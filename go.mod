@@ -11,4 +11,7 @@ require (
 	golang.org/x/crypto v0.57.0
 )
 
-require github.com/stretchr/testify v1.12.1 // indirect
+require (
+	github.com/sqlc-dev/pqtype v0.3.0 // indirect
+	github.com/stretchr/testify v1.12.1 // indirect
+)

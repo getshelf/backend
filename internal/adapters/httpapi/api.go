@@ -69,5 +69,12 @@ func New(dependencies Dependencies) http.Handler {
 		dependencies.Logger,
 	)
 
+	registerItemRoutes(
+		authenticated,
+		dependencies.Items,
+		dependencies.Sessions,
+		dependencies.Logger,
+	)
+
 	return router
 }

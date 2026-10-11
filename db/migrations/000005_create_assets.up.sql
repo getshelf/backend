@@ -10,7 +10,7 @@ CREATE TABLE assets (
     file_name TEXT,
     mime_type TEXT,
     byte_size BIGINT,
-    chechjsum_sha256 TEXT,
+    checksum_sha256 TEXT,
 
     width INTEGER,
     height INTEGER,
@@ -33,7 +33,7 @@ CREATE TABLE assets (
     ),
 
     CONSTRAINT assets_ready_has_storage CHECK (
-        donwload_status <> 'ready'
+        download_status <> 'ready'
         OR (
             storage_key IS NOT NULL
             AND length(storage_key) > 0

@@ -12,7 +12,7 @@ type Item struct {
 	Title       *string
 	SourceURL   *string
 	ContentText *string
-	Metadat     json.RawMessage
+	Metadata    json.RawMessage
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
