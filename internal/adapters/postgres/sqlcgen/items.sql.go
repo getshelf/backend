@@ -8,7 +8,10 @@ package sqlcgen
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
+
+	"github.com/sqlc-dev/pqtype"
 )
 
 const createPendingItemExtraction = `-- name: CreatePendingItemExtraction :exec
@@ -37,41 +40,83 @@ func (q *Queries) CreatePendingItemExtraction(ctx context.Context, arg CreatePen
 }
 
 const createSavedURL = `-- name: CreateSavedURL :one
-INSERT INTO items (
-    id,
-    owner_id,
-    kind,
-    source_url,
-    created_at,
-    updated_at
-) VALUES (
-    $1,
-    $2,
-    'link',
-    $3,
-    $4,
-    $5
+WITH saved_item AS (
+    INSERT INTO items (
+        id,
+        owner_id,
+        kind,
+        source_url,
+        collection_id,
+        created_at,
+        updated_at
+    ) VALUES (
+        $1,
+        $2,
+        'link',
+        $3,
+        $4,
+        $5,
+        $6
+    )
+    RETURNING id, owner_id, kind, title, description, content_text, content_html, content_structured, source_url, canonical_url, provider, external_id, author_name, author_handle, author_url, published_at, user_note, is_favorite, metadata, created_at, updated_at, collection_id
 )
-RETURNING id, owner_id, kind, title, description, content_text, content_html, content_structured, source_url, canonical_url, provider, external_id, author_name, author_handle, author_url, published_at, user_note, is_favorite, metadata, created_at, updated_at
+SELECT
+    i.id, i.owner_id, i.kind, i.title, i.description, i.content_text, i.content_html, i.content_structured, i.source_url, i.canonical_url, i.provider, i.external_id, i.author_name, i.author_handle, i.author_url, i.published_at, i.user_note, i.is_favorite, i.metadata, i.created_at, i.updated_at, i.collection_id,
+    CASE
+        WHEN c.id IS NULL THEN NULL::jsonb
+        ELSE to_jsonb(c)
+    END AS collection
+FROM saved_item AS i
+LEFT JOIN collections AS c
+    ON c.id = i.collection_id
+   AND c.owner_id = i.owner_id
 `
 
 type CreateSavedURLParams struct {
-	ID        string
-	OwnerID   string
-	SourceUrl sql.NullString
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           string
+	OwnerID      string
+	SourceUrl    sql.NullString
+	CollectionID sql.NullString
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
-func (q *Queries) CreateSavedURL(ctx context.Context, arg CreateSavedURLParams) (Item, error) {
+type CreateSavedURLRow struct {
+	ID                string
+	OwnerID           string
+	Kind              string
+	Title             sql.NullString
+	Description       sql.NullString
+	ContentText       sql.NullString
+	ContentHtml       sql.NullString
+	ContentStructured pqtype.NullRawMessage
+	SourceUrl         sql.NullString
+	CanonicalUrl      sql.NullString
+	Provider          sql.NullString
+	ExternalID        sql.NullString
+	AuthorName        sql.NullString
+	AuthorHandle      sql.NullString
+	AuthorUrl         sql.NullString
+	PublishedAt       sql.NullTime
+	UserNote          sql.NullString
+	IsFavorite        bool
+	Metadata          json.RawMessage
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	CollectionID      sql.NullString
+	Collection        interface{}
+}
+
+func (q *Queries) CreateSavedURL(ctx context.Context, arg CreateSavedURLParams) (CreateSavedURLRow, error) {
 	row := q.db.QueryRowContext(ctx, createSavedURL,
 		arg.ID,
 		arg.OwnerID,
 		arg.SourceUrl,
+		arg.CollectionID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	var i Item
+	var i CreateSavedURLRow
 	err := row.Scan(
 		&i.ID,
 		&i.OwnerID,
@@ -94,15 +139,17 @@ func (q *Queries) CreateSavedURL(ctx context.Context, arg CreateSavedURLParams) 
 		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CollectionID,
+		&i.Collection,
 	)
 	return i, err
 }
 
 const getItem = `-- name: GetItem :one
-SELECT id, owner_id, kind, title, description, content_text, content_html, content_structured, source_url, canonical_url, provider, external_id, author_name, author_handle, author_url, published_at, user_note, is_favorite, metadata, created_at, updated_at
+SELECT id, owner_id, kind, title, description, content_text, content_html, content_structured, source_url, canonical_url, provider, external_id, author_name, author_handle, author_url, published_at, user_note, is_favorite, metadata, created_at, updated_at, collection_id
 FROM items
-WHERE id = $1
-    AND owner_id = $2
+WHERE items.id = $1
+    AND items.owner_id = $2
 `
 
 type GetItemParams struct {
@@ -135,27 +182,26 @@ func (q *Queries) GetItem(ctx context.Context, arg GetItemParams) (Item, error) 
 		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CollectionID,
 	)
 	return i, err
 }
 
 const listItems = `-- name: ListItems :many
-SELECT id, owner_id, kind, title, description, content_text, content_html, content_structured, source_url, canonical_url, provider, external_id, author_name, author_handle, author_url, published_at, user_note, is_favorite, metadata, created_at, updated_at
+SELECT id, owner_id, kind, title, description, content_text, content_html, content_structured, source_url, canonical_url, provider, external_id, author_name, author_handle, author_url, published_at, user_note, is_favorite, metadata, created_at, updated_at, collection_id
 FROM items
-WHERE owner_id = $1
-ORDER BY created_at DESC, id DESC
-LIMIT $3
-OFFSET $2
+ORDER BY items.created_at DESC, items.id DESC
+LIMIT $2
+OFFSET $1
 `
 
 type ListItemsParams struct {
-	OwnerID    string
 	PageOffset int32
 	PageSize   int32
 }
 
 func (q *Queries) ListItems(ctx context.Context, arg ListItemsParams) ([]Item, error) {
-	rows, err := q.db.QueryContext(ctx, listItems, arg.OwnerID, arg.PageOffset, arg.PageSize)
+	rows, err := q.db.QueryContext(ctx, listItems, arg.PageOffset, arg.PageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -185,6 +231,7 @@ func (q *Queries) ListItems(ctx context.Context, arg ListItemsParams) ([]Item, e
 			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CollectionID,
 		); err != nil {
 			return nil, err
 		}

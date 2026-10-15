@@ -45,3 +45,10 @@ SELECT *
 FROM collections
 WHERE owner_id = $1
 ORDER BY sort_order;
+
+-- name: ListCollectionItems :many
+SELECT items.*
+FROM items
+WHERE items.collection_id = sqlc.arg(collection_id)
+    AND items.owner_id = sqlc.arg(owner_id)
+ORDER BY items.created_at DESC, items.id DESC;

@@ -12,13 +12,14 @@ import (
 )
 
 type Item struct {
-	ID          string    `json:"id"`
-	Kind        string    `json:"kind"`
-	Title       *string   `json:"title"`
-	SourceURL   *string   `json:"sourceUrl"`
-	ContentText *string   `json:"contentText"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ID          string          `json:"id"`
+	Kind        string          `json:"kind"`
+	Title       *string         `json:"title"`
+	SourceURL   *string         `json:"sourceUrl"`
+	ContentText *string         `json:"contentText"`
+	Collection  *CollectionItem `json:"collection"`
+	CreatedAt   time.Time       `json:"createdAt"`
+	UpdatedAt   time.Time       `json:"updatedAt"`
 }
 
 type createItemInput struct {
@@ -72,8 +73,15 @@ func registerItemRoutes(
 					Kind:        "link",
 					SourceURL:   item.SourceURL,
 					ContentText: item.ContentText,
-					CreatedAt:   item.CreatedAt,
-					UpdatedAt:   item.UpdatedAt,
+					Collection: &CollectionItem{
+						ID:        item.Collection.ID,
+						Title:     item.Collection.Title,
+						Icon:      item.Collection.Icon,
+						CreatedAt: item.Collection.CreatedAt,
+						UpdatedAt: item.Collection.UpdatedAt,
+					},
+					CreatedAt: item.CreatedAt,
+					UpdatedAt: item.UpdatedAt,
 				},
 			}, nil
 		},

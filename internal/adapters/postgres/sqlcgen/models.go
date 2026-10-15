@@ -21,23 +21,23 @@ type Account struct {
 }
 
 type Asset struct {
-	ID              string
-	OwnerID         string
-	Kind            string
-	OriginalUrl     sql.NullString
-	StorageKey      sql.NullString
-	FileName        sql.NullString
-	MimeType        sql.NullString
-	ByteSize        sql.NullInt64
-	ChechjsumSha256 sql.NullString
-	Width           sql.NullInt32
-	Height          sql.NullInt32
-	DurationMs      sql.NullInt64
-	DownloadStatus  string
-	DownloadError   sql.NullString
-	Metadata        json.RawMessage
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID             string
+	OwnerID        string
+	Kind           string
+	OriginalUrl    sql.NullString
+	StorageKey     sql.NullString
+	FileName       sql.NullString
+	MimeType       sql.NullString
+	ByteSize       sql.NullInt64
+	ChecksumSha256 sql.NullString
+	Width          sql.NullInt32
+	Height         sql.NullInt32
+	DurationMs     sql.NullInt64
+	DownloadStatus string
+	DownloadError  sql.NullString
+	Metadata       json.RawMessage
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type Collection struct {
@@ -73,6 +73,7 @@ type Item struct {
 	Metadata          json.RawMessage
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
+	CollectionID      sql.NullString
 }
 
 type ItemAttachment struct {

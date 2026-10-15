@@ -99,6 +99,65 @@ func (q *Queries) GetCollection(ctx context.Context, arg GetCollectionParams) (C
 	return i, err
 }
 
+const listCollectionItems = `-- name: ListCollectionItems :many
+SELECT items.id, items.owner_id, items.kind, items.title, items.description, items.content_text, items.content_html, items.content_structured, items.source_url, items.canonical_url, items.provider, items.external_id, items.author_name, items.author_handle, items.author_url, items.published_at, items.user_note, items.is_favorite, items.metadata, items.created_at, items.updated_at, items.collection_id
+FROM items
+WHERE items.collection_id = $1
+    AND items.owner_id = $2
+ORDER BY items.created_at DESC, items.id DESC
+`
+
+type ListCollectionItemsParams struct {
+	CollectionID sql.NullString
+	OwnerID      string
+}
+
+func (q *Queries) ListCollectionItems(ctx context.Context, arg ListCollectionItemsParams) ([]Item, error) {
+	rows, err := q.db.QueryContext(ctx, listCollectionItems, arg.CollectionID, arg.OwnerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Item
+	for rows.Next() {
+		var i Item
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.Kind,
+			&i.Title,
+			&i.Description,
+			&i.ContentText,
+			&i.ContentHtml,
+			&i.ContentStructured,
+			&i.SourceUrl,
+			&i.CanonicalUrl,
+			&i.Provider,
+			&i.ExternalID,
+			&i.AuthorName,
+			&i.AuthorHandle,
+			&i.AuthorUrl,
+			&i.PublishedAt,
+			&i.UserNote,
+			&i.IsFavorite,
+			&i.Metadata,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CollectionID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCollections = `-- name: ListCollections :many
 SELECT id, title, icon, parent_id, owner_id, sort_order, created_at, updated_at
 FROM collections

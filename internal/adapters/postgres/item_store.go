@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/getshelf/backend/internal/adapters/postgres/sqlcgen"
+	"github.com/getshelf/backend/internal/modules/collection"
 	"github.com/getshelf/backend/internal/modules/item"
 )
 
@@ -61,6 +62,9 @@ func (store *ItemStore) SaveURL(
 		Title: stringPointer(row.Title),
 		SourceURL: stringPointer(row.SourceUrl),
 		ContentText: stringPointer(row.ContentText),
+		Collection: &collection.Collection{
+
+		},
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
 	}, nil
