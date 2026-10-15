@@ -1,6 +1,6 @@
 .PHONY: run test test-unit test-integration vet build migration-create docker-up docker-down docker-reset
 
-MIGRATIONS_DIR=internal/infrastructure/persistence/postgres/migrations
+MIGRATIONS_DIR=db/migrations
 MIGRATE_PACKAGE=github.com/golang-migrate/migrate/v4/cmd/migrate
 
 run:
