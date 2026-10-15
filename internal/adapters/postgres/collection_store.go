@@ -161,7 +161,7 @@ func nest(collections []sqlcgen.Collection) []c.Collection {
 	for _, collection := range collections {
 		key := ""
 		if collection.ParentID.Valid {
-			key = *&collection.ParentID.String
+			key = collection.ParentID.String
 		}
 		collectionsOf[key] = append(collectionsOf[key], c.Collection{
 			ID:        collection.ID,

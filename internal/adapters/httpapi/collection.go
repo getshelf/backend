@@ -72,7 +72,7 @@ type updateCollectionInput struct {
 type updateCollectionInputBody struct {
 	Title    string                    `json:"title"`
 	Icon     *string                   `json:"icon"`
-	ParentID OmittableNullable[string] `json:"parent_id,omitempty" required:"false"`
+	ParentID OmittableNullable[string] `json:"parent_id" required:"false"`
 }
 
 type updateCollectionOutput struct {
