@@ -65,6 +65,19 @@ func (store *ItemStore) SaveURL(
 		return item.Item{}, fmt.Errorf("Create extraction: %w", err)
 	}
 
+	err = queries.CreatePendingItemExtraction(
+		ctx,
+		sqlcgen.CreatePendingItemExtractionParams{
+			ItemID: row.ID,
+			CreatedAt: params.CreatedAt,
+			UpdatedAt: params.CreatedAt,
+		},
+	)
+
+	if err != nil {
+		return item.Item{}, fmt.Errorf("create pending item extraction: %w", err)
+	}
+
 	if err := tx.Commit(); err != nil {
 		return item.Item{}, fmt.Errorf("Commit save item: %w", err)
 	}
