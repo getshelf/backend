@@ -27,7 +27,8 @@ type createItemInput struct {
 }
 
 type createItemInputBody struct {
-	URL string `json:"url"`
+	URL          string  `json:"url"`
+	CollectionID *string `json:"collectionId"`
 }
 
 type createItemOutput struct {
@@ -60,10 +61,21 @@ func registerItemRoutes(
 				return nil, huma.Error401Unauthorized("unauthorized")
 			}
 
-			item, err := items.SaveURL(ctx, accountID, input.Body.URL)
+			item, err := items.SaveURL(ctx, accountID, input.Body.URL, input.Body.CollectionID)
 
 			if err != nil {
 				return nil, err
+			}
+
+			var responseCollection *CollectionItem
+			if item.Collection != nil {
+				responseCollection = &CollectionItem{
+					ID:        item.Collection.ID,
+					Title:     item.Collection.Title,
+					Icon:      item.Collection.Icon,
+					CreatedAt: item.Collection.CreatedAt,
+					UpdatedAt: item.Collection.UpdatedAt,
+				}
 			}
 
 			return &createItemOutput{
@@ -73,15 +85,9 @@ func registerItemRoutes(
 					Kind:        "link",
 					SourceURL:   item.SourceURL,
 					ContentText: item.ContentText,
-					Collection: &CollectionItem{
-						ID:        item.Collection.ID,
-						Title:     item.Collection.Title,
-						Icon:      item.Collection.Icon,
-						CreatedAt: item.Collection.CreatedAt,
-						UpdatedAt: item.Collection.UpdatedAt,
-					},
-					CreatedAt: item.CreatedAt,
-					UpdatedAt: item.UpdatedAt,
+					Collection:  responseCollection,
+					CreatedAt:   item.CreatedAt,
+					UpdatedAt:   item.UpdatedAt,
 				},
 			}, nil
 		},

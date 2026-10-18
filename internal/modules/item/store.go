@@ -6,10 +6,11 @@ import (
 )
 
 type SaveURLParams struct {
-	ID        string
-	OwnerID   string
-	URL       string
-	CreatedAt time.Time
+	ID           string
+	OwnerID      string
+	URL          string
+	CollectionID *string
+	CreatedAt    time.Time
 }
 
 type Store interface {

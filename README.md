@@ -13,4 +13,5 @@ make docker-up
 3. Open the docs in your browser:
 ```
 http://localhost:8080/docs
+http://localhost:8080/openapi.json
 ```

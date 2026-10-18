@@ -34,6 +34,7 @@ func (service *Service) SaveURL(
 	ctx context.Context,
 	ownerID string,
 	rawURL string,
+	collectionID *string,
 ) (Item, error) {
 	rawURL = strings.TrimSpace(rawURL)
 
@@ -58,5 +59,6 @@ func (service *Service) SaveURL(
 		OwnerID: ownerID,
 		URL: rawURL,
 		CreatedAt: time.Now().UTC(),
+		CollectionID: collectionID,
 	})
 }
