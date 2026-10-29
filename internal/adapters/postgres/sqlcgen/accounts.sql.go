@@ -69,3 +69,32 @@ func (q *Queries) FindAccountByEmail(ctx context.Context, email string) (Account
 	)
 	return i, err
 }
+
+const findAccountByID = `-- name: FindAccountByID :one
+SELECT
+    id,
+    email,
+    created_at,
+    updated_at
+FROM accounts
+WHERE email = $1
+`
+
+type FindAccountByIDRow struct {
+	ID        string
+	Email     string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) FindAccountByID(ctx context.Context, email string) (FindAccountByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, findAccountByID, email)
+	var i FindAccountByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

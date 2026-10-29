@@ -68,4 +68,25 @@ func (store *AccountStore) FindByEmail(
 	}, nil
 }
 
+func (store *AccountStore) FindByID(
+	ctx context.Context,
+	accoundID string,
+) (account.Account, error) {
+	acc, err := store.queries.FindAccountByEmail(
+		ctx,
+		accoundID,
+	)
+
+	if err != nil {
+		return account.Account{}, err
+	}
+
+	return account.Account{
+		ID: acc.ID,
+		Email: acc.Email,
+		CreatedAt: acc.CreatedAt,
+		UpdatedAt: acc.UpdatedAt,
+	}, nil
+}
+
 var _ account.Store = (*AccountStore)(nil)

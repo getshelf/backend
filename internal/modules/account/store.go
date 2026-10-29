@@ -22,4 +22,8 @@ type Store interface {
 		ctx context.Context,
 		email string,
 	) (Account, error)
+	FindByID(
+		ctx context.Context,
+		accountID string,
+	) (Account, error)
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/getshelf/backend/internal/adapters/httpapi/middlewares"
 	"github.com/getshelf/backend/internal/modules/account"
 	"github.com/getshelf/backend/internal/modules/session"
 )
@@ -20,6 +21,12 @@ type loginInput struct {
 type loginOutput struct {
 	SetCookie http.Cookie `header:"Set-Cookie"`
 
+	Body struct {
+		Account accountResponse `json:"account"`
+	}
+}
+
+type getAccountOutput struct {
 	Body struct {
 		Account accountResponse `json:"account"`
 	}
@@ -128,6 +135,59 @@ func registerAuthRoutes(
 			return &logoutOutput{
 				SetCookie: clearSessionCookie(secureCookies, session.SessionCookieName),
 			}, nil
+		},
+	)
+
+	huma.Register(
+		api,
+		huma.Operation{
+			OperationID: "getProfile",
+			Method: http.MethodGet,
+			Path: "/auth/profile",
+			Summary: "Get Profile",
+			Description: "Returns the current session profile",
+			Tags: []string{"Authentication"},
+			DefaultStatus: http.StatusOK,
+			Middlewares: huma.Middlewares{
+				middlewares.RequireSession(
+					api,
+					sessions,
+					session.SessionCookieName,
+				),
+			},
+		},
+		func(
+			ctx context.Context,
+			_ *struct{},
+		) (*getAccountOutput, error) {
+			accountID, ok := sessions.GetAccountID(ctx)
+
+			if !ok {
+				return nil, huma.Error401Unauthorized("unauthorized")
+			}
+
+			response, err := accounts.GetAccount(ctx, accountID)
+			if err != nil {
+				return nil, huma.Error500InternalServerError(
+					"couldn't get the acccount",
+				)
+			}
+
+			account := response.Account
+
+			if err != nil {
+				return nil, huma.Error500InternalServerError(
+					"couldn't get the account",
+				)
+			}
+
+			output := &getAccountOutput{}
+			output.Body.Account = accountResponse{
+				ID: account.ID,
+				Email: account.Email,
+			}
+
+			return output, nil
 		},
 	)
 }

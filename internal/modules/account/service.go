@@ -31,6 +31,10 @@ type RegisterOutput struct {
 	ID string
 }
 
+type GetAccountOutput struct {
+	Account Account
+}
+
 func NewService(store Store) *Service {
 	return newService(
 		store,
@@ -134,6 +138,21 @@ func (service *Service) Register(
 	}
 
 	return RegisterOutput{ID: id}, nil
+}
+
+func (service *Service) GetAccount(
+	ctx context.Context,
+	accountID string,
+) (GetAccountOutput, error) {
+	acc, err := service.store.FindByID(ctx, accountID)
+
+	if err != nil {
+		return GetAccountOutput{}, err
+	}
+
+	return GetAccountOutput{
+		Account: acc,
+	}, nil
 }
 
 func normalizeEmail(email string) (string, error) {

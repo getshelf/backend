@@ -7,10 +7,13 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/getshelf/backend/internal/adapters/httpapi"
 	"github.com/getshelf/backend/internal/adapters/postgres"
+	"github.com/getshelf/backend/internal/adapters/webpage"
 	"github.com/getshelf/backend/internal/config"
 	"github.com/getshelf/backend/internal/modules/account"
 	"github.com/getshelf/backend/internal/modules/collection"
@@ -23,7 +26,13 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+
+	defer stop()
 
 	logger := slog.New(
 		slog.NewJSONHandler(
@@ -79,6 +88,14 @@ func main() {
 	itemStore := postgres.NewItemStore(db)
 	items := item.NewService(itemStore)
 
+	extractor := webpage.NewExtractor()
+
+	extractionWorker := item.NewExtractionWorker(
+		itemStore,
+		extractor,
+		logger,
+	)
+
 
 	handler := httpapi.New(httpapi.Dependencies{
 		Accounts: accounts,
@@ -93,13 +110,46 @@ func main() {
 		Handler: handler,
 	}
 
-	logger.Info(
-		"HTTP server starting",
-		"address",
-		server.Addr,
+	workerDone := make(chan struct{})
+
+	go func() {
+		defer close(workerDone)
+		extractionWorker.Run(ctx)
+	}()
+
+	serverErrors := make(chan error, 1)
+
+	go func() {
+		logger.Info(
+			"HTTP server starting",
+			"address", server.Addr,
+		)
+		serverErrors <- server.ListenAndServe()
+	}()
+
+	select {
+		case <- ctx.Done():
+			// Shutdown signal received
+		case err := <- serverErrors:
+			if err != nil && !errors.Is(err, http.ErrServerClosed) {
+				logger.Error("HTTP Server failed", "error", err)
+			}
+	}
+
+	stop()
+
+	shutdownCtx, cancelShutdown := context.WithTimeout(
+		context.Background(),
+		10 * time.Second,
 	)
 
-	if err := server.ListenAndServe(); err != nil {
-		log.Fatal(err)
+	defer cancelShutdown()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		logger.Error("HTTP server shutdown failed", "error", err)
+		_  = server.Close()
 	}
+
+	// Wait before the existing deferred db.Close() runs.
+	<-workerDone
 }
